@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Connections{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin-top: 2rem;">
+    <!-- Pending Connection Requests -->
+    {% if pending_requests %}
+    <div class="card mb-4" style="background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); padding: 1.5rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        <h3 class="text-white mb-3">
+            <i class="fas fa-user-clock"></i> Pending Connection Requests
+        </h3>
+        <div class="list-group">
+            {% for request in pending_requests %}
+            <div class="list-group-item mb-2" style="border-radius: 10px; background: rgba(255,255,255,0.95);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">{{ request.user.username }}</h5>
+                        <small class="text-muted">Requested {{ request.requested_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <div class="btn-group">
+                        <form action="{{ url_for('connections.respond_to_request', connection_id=request.connection_id, action='accept') }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-success btn-sm mx-1">
+                                <i class="fas fa-check"></i> Accept
+                            </button>
+                        </form>
+                        <form action="{{ url_for('connections.respond_to_request', connection_id=request.connection_id, action='reject') }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Connected Users -->
+    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        <h3 class="text-white mb-3">
+            <i class="fas fa-user-friends"></i> Your Connections
+        </h3>
+        {% if connected_users %}
+        <div class="list-group">
+            {% for connection in connected_users %}
+            <div class="list-group-item mb-2" style="border-radius: 10px; background: rgba(255,255,255,0.95);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">{{ connection.user.username }}</h5>
+                        <small class="text-muted">Connected since {{ connection.connected_since.strftime('%Y-%m-%d') }}</small>
+                    </div>
+                    <div class="btn-group">
+                        <a href="{{ url_for('files.view_user_files', username=connection.user.username) }}" class="btn btn-primary btn-sm mx-1">
+                            <i class="fas fa-user"></i> View Profile
+                        </a>
+                        <form action="{{ url_for('connections.remove_connection', user_id=connection.user.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to remove this connection?');">
+                                <i class="fas fa-user-minus"></i> Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-white">
+            <p>You haven't connected with anyone yet.</p>
+            <p>Start by searching for users and sending connection requests!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.btn-group .btn {
+    transition: all 0.3s ease;
+}
+.btn-group .btn:hover {
+    transform: translateY(-2px);
+}
+.list-group-item {
+    transition: all 0.3s ease;
+}
+.list-group-item:hover {
+    transform: translateX(5px);
+}
+</style>
+{% endblock %}

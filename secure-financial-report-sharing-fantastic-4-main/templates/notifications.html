@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - Zenith{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --accept-teal: #14B8A6;
+        --sleek-red: #F87171;
+        --indigo: #818CF8;
+    }
+
+    /* Flash Messages */
+    .flash-messages {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+    }
+
+    .flash-message {
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        font-family: 'Exo 2', sans-serif;
+        font-weight: 600;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .flash-message.success {
+        background-color: var(--accept-teal);
+        color: var(--smooth-black);
+    }
+
+    .flash-message.error {
+        background-color: var(--sleek-red);
+        color: var(--smooth-black);
+    }
+
+    .flash-message.info {
+        background-color: var(--indigo);
+        color: var(--smooth-black);
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    .notifications-header {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--heading-white);
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .notification-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .notification-card {
+        background-color: var(--smooth-black);
+        border: 2px solid var(--border-gray-purple);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .notification-card:hover {
+        border-color: var(--primary-violet);
+        transform: translateY(-2px);
+    }
+
+    .notification-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-violet), var(--border-gray-purple));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--heading-white);
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .notification-content {
+        flex-grow: 1;
+    }
+
+    .notification-username {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--heading-white);
+        margin-bottom: 0.25rem;
+    }
+
+    .notification-message {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 1rem;
+        color: var(--body-white);
+    }
+
+    .notification-file {
+        color: var(--primary-violet);
+        font-weight: 600;
+    }
+
+    .notification-actions {
+        display: flex;
+        gap: 1rem;
+        flex-shrink: 0;
+    }
+
+    .notification-btn {
+        font-family: 'Exo 2', sans-serif;
+        padding: 0.75rem 1.75rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        color: var(--smooth-black); /* Ensure text color is consistent */
+    }
+
+    .btn-accept {
+        background-color: var(--accept-teal);
+        color: var(--smooth-black);
+    }
+
+    .btn-accept:hover {
+        background-color: #10a895;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
+    }
+
+    .btn-deny,
+    .btn-delete,
+    .btn-revoke {
+        background-color: var(--sleek-red);
+        color: var(--smooth-black);
+    }
+
+    .btn-deny:hover,
+    .btn-delete:hover,
+    .btn-revoke:hover {
+        background-color: #ef4444;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(248, 113, 113, 0.4);
+    }
+
+    .btn-confirm {
+        background-color: var(--accept-teal);
+        color: var(--smooth-black);
+    }
+
+    .btn-confirm:hover {
+        background-color: #10a895;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
+    }
+
+    .no-notifications {
+        text-align: center;
+        padding: 3rem;
+        color: var(--body-white);
+        font-size: 1.125rem;
+    }
+
+    @media (max-width: 768px) {
+        .notification-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .notification-actions {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .notification-btn {
+            flex: 1;
+        }
+    }
+
+    /* --- [MODIFIKASI BARU] Modal Styles --- */
+    /* Styles ini ditambahkan agar Modal Approval terlihat benar */
+    .decrypt-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .decrypt-modal-overlay.active {
+        display: flex;
+    }
+
+    .decrypt-modal {
+        background: var(--subtle-bg-dark-violet);
+        border: 2px solid var(--border-gray-purple);
+        border-radius: 15px;
+        padding: 3rem;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        animation: modalSlideIn 0.3s ease-out;
+        text-align: center;
+    }
+
+    @keyframes modalSlideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .decrypt-modal-title {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-violet);
+        margin-bottom: 1rem;
+    }
+
+    .decrypt-modal-info {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 1rem;
+        color: var(--body-white);
+        margin-bottom: 1rem;
+    }
+
+    .decrypt-modal-input {
+        width: 100%;
+        padding: 1rem;
+        background: var(--smooth-black);
+        border: 2px solid var(--border-gray-purple);
+        border-radius: 10px;
+        color: #fff;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        transition: border-color 0.3s ease;
+    }
+
+    .decrypt-modal-input:focus {
+        outline: none;
+        border-color: var(--primary-violet);
+    }
+
+    .decrypt-modal-btn {
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary-violet);
+        color: var(--smooth-black);
+        border: none;
+        border-radius: 10px;
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1.125rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .decrypt-modal-back {
+        margin-top: 1rem;
+    }
+    
+    .decrypt-modal-back a {
+        color: var(--body-white);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+    
+    .decrypt-modal-back a:hover {
+        color: var(--primary-violet);
+    }
+    /* --- [AKHIR MODIFIKASI CSS] --- */
+</style>
+
+<div class="flash-messages">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<h1 class="notifications-header">Notifications</h1>
+
+<div class="notification-list">
+    {% if pending_requests or granted_access or accepted_connections or pending_file_requests %}
+        
+        {% for file_request in pending_file_requests %}
+        <div class="notification-card">
+            <div class="notification-avatar">
+                {{ file_request.requester.username[0].upper() }}
+            </div>
+            <div class="notification-content">
+                <div class="notification-username">{{ file_request.requester.username }}</div>
+                <div class="notification-message">
+                    {% if file_request.file %}
+                        requests access to <span class="notification-file">{{ file_request.file.original_filename }}</span>
+                    {% else %}
+                        requests access to your files
+                    {% endif %}
+                </div>
+            </div>
+            <div class="notification-actions">
+                <button type="button" class="notification-btn btn-accept" 
+                        onclick="openApproveModal('{{ file_request.id }}', '{{ file_request.requester.username }}')">
+                    Accept
+                </button>
+                
+                <form method="POST" action="{{ url_for('access.respond_to_access_request', request_id=file_request.id, action='deny') }}" style="display: inline;">
+                    <button type="submit" class="notification-btn btn-deny">Deny</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% for request in pending_requests %}
+        <div class="notification-card">
+            <div class="notification-avatar">
+                {{ request.requester.username[0].upper() }}
+            </div>
+            <div class="notification-content">
+                <div class="notification-username">{{ request.requester.username }}</div>
+                <div class="notification-message">has requested to connect with you</div>
+            </div>
+            <div class="notification-actions">
+                <form method="POST" action="{{ url_for('connections.respond_to_request', connection_id=request.id, action='accept') }}" style="display: inline;">
+                    <button type="submit" class="notification-btn btn-confirm">Confirm</button>
+                </form>
+                <form method="POST" action="{{ url_for('connections.respond_to_request', connection_id=request.id, action='reject') }}" style="display: inline;">
+                    <button type="submit" class="notification-btn btn-delete">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% for access in granted_access %}
+        <div class="notification-card">
+            <div class="notification-avatar">
+                {{ access.requester.username[0].upper() }}
+            </div>
+            <div class="notification-content">
+                <div class="notification-username">{{ access.requester.username }}</div>
+                <div class="notification-message">
+                    has been granted access to <span class="notification-file">{{ access.file.original_filename }}</span>
+                </div>
+            </div>
+            <div class="notification-actions">
+                <form method="POST" action="{{ url_for('access.revoke_access', access_id=access.id) }}" style="display: inline;">
+                    <button type="submit" class="notification-btn btn-revoke">Revoke</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% for connection in accepted_connections[:5] %}
+        <div class="notification-card">
+            {% set other_user = connection.receiver if connection.requester_id == current_user.id else connection.requester %}
+            <div class="notification-avatar">
+                {{ other_user.username[0].upper() }}
+            </div>
+            <div class="notification-content">
+                <div class="notification-username">{{ other_user.username }}</div>
+                <div class="notification-message">has connected with you</div>
+            </div>
+        </div>
+        {% endfor %}
+
+    {% else %}
+        <div class="no-notifications">
+            <i class="fas fa-bell-slash" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>No notifications yet</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="decrypt-modal-overlay" id="approveModal" onclick="closeApproveModal(event)">
+    <div class="decrypt-modal" onclick="event.stopPropagation()">
+        <h2 class="decrypt-modal-title">Approve Access</h2>
+        <p class="decrypt-modal-info">
+            Sharing key securely with: <strong id="requesterName"></strong>
+        </p>
+        <p style="color: #bbb; margin-bottom: 1rem;">
+            Please enter your <strong>LOGIN password</strong> to decrypt your private key and securely share the file key.
+        </p>
+
+        <form method="POST" id="approveForm">
+            <input type="password" name="password" class="decrypt-modal-input" 
+                   placeholder="Your Login Password" required>
+            <button type="submit" class="decrypt-modal-btn" style="background: var(--accept-teal);">
+                Confirm Approval
+            </button>
+        </form>
+        <div class="decrypt-modal-back">
+            <a href="#" onclick="closeApproveModal(event)">Cancel</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// [MODIFIKASI BARU] Fungsi Javascript untuk Modal
+function openApproveModal(requestId, username) {
+    document.getElementById('approveModal').classList.add('active');
+    document.getElementById('approveModal').style.display = 'flex';
+    document.getElementById('requesterName').textContent = username;
+    
+    // Set action URL secara dinamis ke route respond_to_access_request
+    // Format: /access/respond-request/<request_id>/approve
+    document.getElementById('approveForm').action = "/access/respond-request/" + requestId + "/approve";
+    
+    // Fokus ke input password
+    document.querySelector('#approveForm input[name="password"]').focus();
+}
+
+function closeApproveModal(event) {
+    if(event) event.preventDefault();
+    document.getElementById('approveModal').classList.remove('active');
+    document.getElementById('approveModal').style.display = 'none';
+    // Reset form agar password hilang
+    document.getElementById('approveForm').reset();
+}
+
+// Auto-hide flash messages after 5 seconds (Kode Lama)
+document.addEventListener('DOMContentLoaded', function() {
+    const flashMessages = document.querySelectorAll('.flash-message');
+    
+    flashMessages.forEach(function(message) {
+        setTimeout(function() {
+            message.style.animation = 'slideOut 0.3s ease';
+            setTimeout(function() {
+                message.remove();
+            }, 300);
+        }, 5000);
+    });
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeApproveModal(event);
+        }
+    });
+});
+</script>
+{% endblock %}

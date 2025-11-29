@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Excel Template{% endblock %}
+
+{% block content %}
+<style>
+    .template-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .template-title {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--heading-white);
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .template-table {
+        background: var(--subtle-bg-dark-violet);
+        border: 2px solid var(--border-gray-purple);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 2.5rem;
+    }
+
+    .template-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .template-table thead tr {
+        background: var(--primary-violet);
+    }
+
+    .template-table th {
+        padding: 1.25rem;
+        font-family: 'Exo 2', sans-serif;
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: var(--smooth-black);
+        text-align: center;
+    }
+
+    .template-table tbody tr {
+        border-bottom: 1px solid var(--border-gray-purple);
+    }
+
+    .template-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .template-table td {
+        padding: 1.25rem;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 1rem;
+        color: var(--heading-white);
+        text-align: center;
+    }
+
+    .template-table td:first-child {
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .download-button {
+        display: block;
+        width: 100%;
+        padding: 1.25rem;
+        background: var(--primary-violet);
+        color: var(--smooth-black);
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .download-button:hover {
+        background: var(--indigo);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+    }
+
+    .download-button:active {
+        transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+        .template-title {
+            font-size: 1.5rem;
+        }
+
+        .template-table th,
+        .template-table td {
+            padding: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .download-button {
+            font-size: 1.125rem;
+        }
+    }
+</style>
+
+<div class="template-container">
+    <h1 class="template-title">Excel Template</h1>
+
+    <div class="template-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Amount (USD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Revenue</td>
+                    <td>Revenue Amount</td>
+                </tr>
+                <tr>
+                    <td>Expenses</td>
+                    <td>Expenses Amount</td>
+                </tr>
+                <tr>
+                    <td>Net Profit</td>
+                    <td>Net Profit Amount</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <a href="{{ url_for('files.download_template') }}" class="download-button">
+        Download Excel Template
+    </a>
+</div>
+{% endblock %}
