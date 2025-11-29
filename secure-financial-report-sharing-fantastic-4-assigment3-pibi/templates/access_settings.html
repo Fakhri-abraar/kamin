@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Access Settings{% endblock %}
+
+{% block content %}
+<style>
+    .settings-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: var(--heading-white);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .settings-title {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--primary-violet);
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .settings-section {
+        margin-bottom: 2.5rem;
+    }
+
+    .section-title {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--smooth-black);
+        margin-bottom: 1rem;
+    }
+
+    .section-description {
+        font-family: 'Open Sans', sans-serif;
+        color: #999;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .privacy-options {
+        background: #f9f9f9;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .privacy-option {
+        margin-bottom: 0.75rem;
+        font-family: 'Open Sans', sans-serif;
+        color: var(--smooth-black);
+    }
+
+    .privacy-option input[type="radio"] {
+        margin-right: 0.5rem;
+    }
+
+    .btn-update {
+        background: var(--primary-violet);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Exo 2', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-update:hover {
+        background: #9f8bfa;
+        transform: translateY(-2px);
+    }
+
+    .grant-form {
+        background: var(--subtle-bg-dark-violet);
+        padding: 1.5rem;
+        border-radius: 10px;
+        border: 2px solid var(--border-gray-purple);
+    }
+
+    .form-label {
+        font-family: 'Open Sans', sans-serif;
+        font-weight: 600;
+        color: var(--body-white);
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--smooth-black);
+        border: 2px solid var(--border-gray-purple);
+        border-radius: 8px;
+        color: var(--heading-white);
+        font-family: 'Open Sans', sans-serif;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--accept-teal);
+    }
+
+    .form-input::placeholder {
+        color: #666;
+    }
+
+    .btn-grant {
+        background: var(--accept-teal);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Exo 2', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-grant:hover {
+        background: #0d9488;
+        transform: translateY(-2px);
+    }
+
+    .authorized-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .authorized-item {
+        background: var(--subtle-bg-dark-violet);
+        border: 2px solid var(--border-gray-purple);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        color: var(--heading-white);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .no-users {
+        color: var(--body-white);
+        font-family: 'Open Sans', sans-serif;
+        font-style: italic;
+    }
+</style>
+
+<div class="settings-container">
+    <h2 class="settings-title">
+        <i class="fas fa-user-shield"></i> Access Settings
+    </h2>
+
+    <!-- Profile Privacy Section -->
+    <div class="settings-section">
+        <h3 class="section-title">Profile Privacy</h3>
+        <p class="section-description">Atur siapa yang dapat melihat daftar file Anda.</p>
+        <form method="POST" action="{{ url_for('access.settings') }}">
+            <div class="privacy-options">
+                <label class="privacy-option">
+                    <input type="radio" name="is_private" value="true" {% if current_user.is_private %}checked{% endif %}>
+                    <strong>Private:</strong> Hanya pengguna yang Anda beri izin yang dapat melihat file Anda.
+                </label>
+                <label class="privacy-option">
+                    <input type="radio" name="is_private" value="false" {% if not current_user.is_private %}checked{% endif %}>
+                    <strong>Public:</strong> Siapa pun yang login dapat melihat file Anda.
+                </label>
+            </div>
+            <button type="submit" class="btn-update">Update Privacy</button>
+        </form>
+    </div>
+
+    <!-- Grant Access Section -->
+    <div class="settings-section">
+        <h3 class="section-title">Grant Access</h3>
+        <p class="section-description">Izinkan pengguna tertentu untuk melihat file Anda meskipun profil Anda privat.</p>
+        <form method="POST" action="{{ url_for('access.grant_access') }}" class="grant-form">
+            <label for="username" class="form-label">Grant access to user (by username):</label>
+            <input 
+                type="text" 
+                name="username" 
+                id="username" 
+                class="form-input"
+                required 
+                placeholder="Enter username (e.g., user_b)"
+            >
+            <button type="submit" class="btn-grant">Grant Access</button>
+        </form>
+    </div>
+
+    <!-- Authorized Users Section -->
+    <div class="settings-section">
+        <h3 class="section-title">Authorized Users</h3>
+        <p class="section-description">Pengguna berikut dapat melihat file Anda:</p>
+        {% if authorized_list %}
+            <ul class="authorized-list">
+                {% for user in authorized_list %}
+                    <li class="authorized-item">{{ user.username }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-users">You have not granted access to any users.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

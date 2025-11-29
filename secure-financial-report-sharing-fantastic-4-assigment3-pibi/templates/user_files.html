@@ -1,0 +1,704 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile_user.username }} - Zenith{% endblock %}
+
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<style>
+    :root {
+        --indigo: #818CF8;
+        --accept-teal: #14B8A6;
+    }
+
+    .flash-messages {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+    }
+
+    .flash-message {
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .flash-message.success {
+        background-color: var(--accept-teal);
+        color: white;
+        border-left: 4px solid #0d9488;
+    }
+
+    .flash-message.error {
+        background-color: var(--sleek-red);
+        color: white;
+        border-left: 4px solid #dc2626;
+    }
+
+    .flash-message.info {
+        background-color: var(--indigo);
+        color: white;
+        border-left: 4px solid #6366f1;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 3rem;
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid var(--border-gray-purple);
+    }
+
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-violet), var(--border-gray-purple));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        color: var(--heading-white);
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .profile-info {
+        flex-grow: 1;
+    }
+
+    .profile-username {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--heading-white);
+        margin-bottom: 1.5rem;
+    }
+
+    .profile-stats {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .profile-stat {
+        color: var(--body-white);
+        font-size: 1rem;
+    }
+
+    .profile-stat strong {
+        color: var(--heading-white);
+        font-weight: 600;
+    }
+
+    .connect-btn {
+        padding: 0.75rem 1.5rem;
+        background-color: transparent;
+        color: var(--indigo);
+        border: 2px solid var(--indigo);
+        border-radius: 8px;
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .connect-btn:hover {
+        background-color: var(--indigo);
+        color: var(--smooth-black);
+        transform: translateY(-2px);
+    }
+
+    .connect-btn.connected {
+        background-color: var(--indigo);
+        color: var(--smooth-black);
+        border-color: var(--indigo);
+    }
+
+    .connect-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .files-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .file-card {
+        aspect-ratio: 1;
+        background-color: var(--subtle-bg-dark-violet);
+        border: 2px solid var(--border-gray-purple);
+        border-radius: 10px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .file-card:hover {
+        border-color: var(--primary-violet);
+        transform: translateY(-2px);
+    }
+
+    .file-name {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--heading-white);
+        margin-bottom: 0.75rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 90%;
+    }
+
+    .file-meta {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 0.875rem;
+        color: var(--body-white);
+        line-height: 1.8;
+    }
+
+    .file-meta div {
+        margin-bottom: 0.25rem;
+    }
+
+    .file-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .file-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-family: 'Exo 2', sans-serif;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .file-btn.request {
+        background-color: var(--primary-violet);
+        color: var(--smooth-black);
+    }
+
+    .file-btn.request:hover {
+        background-color: #9f8bfa;
+    }
+
+    .file-btn.download {
+        background-color: var(--accept-teal);
+        color: var(--smooth-black);
+    }
+
+    .file-btn.download:hover {
+        background-color: #10a895;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
+    }
+
+    .file-btn.requested {
+        background-color: transparent;
+        color: var(--body-white);
+        border: 2px solid var(--border-gray-purple);
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .no-files {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem;
+        color: var(--body-white);
+    }
+
+    .private-message {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem;
+        color: var(--body-white);
+    }
+
+    @media (max-width: 992px) {
+        .files-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .profile-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .profile-stats {
+            justify-content: center;
+        }
+
+        .files-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background-color: transparent;
+        color: var(--primary-violet);
+        border: 2px solid var(--primary-violet);
+        border-radius: 8px;
+        font-family: 'Exo 2', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+    }
+
+    .back-button:hover {
+        background-color: var(--primary-violet);
+        color: var(--smooth-black);
+        transform: translateX(-5px);
+    }
+</style>
+
+<a href="{{ url_for('main.search_user') }}" class="back-button">
+    <i class="fas fa-arrow-left"></i> Back to Search
+</a>
+
+<div class="profile-header">
+    <div class="profile-avatar">
+        {{ profile_user.username[0].upper() }}
+    </div>
+    <div class="profile-info">
+        <h1 class="profile-username">{{ profile_user.username }}</h1>
+        <div class="profile-stats">
+            <span class="profile-stat"><strong>{{ profile_user.files.count() }}</strong> posts</span>
+        </div>
+        <div id="connectionControls">
+            <div style="display: inline-block; width: 24px; height: 24px; border: 3px solid var(--primary-violet); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="files-grid">
+    {% if is_private %}
+        <div class="private-message">
+            <i class="fas fa-lock" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>This account is private</p>
+        </div>
+    {% elif files and files|length > 0 %}
+        {% for file in files %}
+        <div class="file-card">
+            <div>
+                <div class="file-name" title="{{ file.original_filename }}">{{ file.original_filename }}</div>
+                <div class="file-meta">
+                    <div>Type: {{ file.original_filename.split('.')[-1].upper() }}</div>
+                    <div>Size: {{ (file.file_size / 1024)|round(2) }} KB</div>
+                    <div>Uploaded At: {{ file.uploaded_at.strftime('%Y-%m-%d') }}</div>
+                </div>
+            </div>
+            <div class="file-actions" style="display: flex; justify-content: space-between; gap: 0.5rem;">
+                {% if file.id in granted_file_ids %}
+                    <button class="file-btn download" style="flex: 1; background-color: var(--accept-teal);" onclick="openDecryptModal({{ file.id }}, '{{ file.original_filename }}', '{{ file.encryption_algorithm }}')">
+                        Download
+                    </button>
+                    <a href="{{ url_for('files.download_encrypted', file_id=file.id) }}" class="file-btn" style="text-decoration: none; flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; background: #FB923C; color: white; border: none;">Raw</a>
+                {% elif file.id in pending_file_ids %}
+                    <button class="file-btn requested" style="width: 100%;" disabled>Requested</button>
+                {% else %}
+                    <button class="file-btn request" style="width: 100%;" onclick="requestFileAccess({{ file.id }}, this)">Request Access</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-files">
+            <i class="fas fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>No files uploaded yet</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="decrypt-modal-overlay" id="decryptModal" onclick="closeDecryptModal(event)">
+    <div class="decrypt-modal" onclick="event.stopPropagation()">
+        <h2 class="decrypt-modal-title">Decrypt File</h2>
+        
+        <p class="decrypt-modal-info">
+            Decrypting: <strong id="decryptFileName"></strong>
+        </p>
+
+        <form method="POST" id="decryptForm" action="">
+            <label for="decryptPassword" class="decrypt-modal-label">Encryption Key</label>
+            <input 
+                type="password" 
+                name="password" 
+                id="decryptPassword" 
+                class="decrypt-modal-input"
+                placeholder="Enter Your Password"
+                required
+            >
+
+            <button type="submit" class="decrypt-modal-btn">
+                Decrypt and Download
+            </button>
+        </form>
+
+        <div class="decrypt-modal-back">
+            <a href="#" onclick="closeDecryptModal(event)">
+                <i class="fas fa-arrow-left"></i> Back to {{ profile_user.username }}'s Profile
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Decrypt Modal Styles */
+.decrypt-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.decrypt-modal-overlay.active {
+    display: flex;
+}
+
+.decrypt-modal {
+    background: var(--subtle-bg-dark-violet);
+    border: 2px solid var(--border-gray-purple);
+    border-radius: 15px;
+    padding: 3rem;
+    max-width: 900px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.decrypt-modal-title {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-violet);
+    margin-bottom: 1rem;
+}
+
+.decrypt-modal-info {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1rem;
+    color: var(--body-white);
+    margin-bottom: 2rem;
+}
+
+.decrypt-modal-info strong {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 600;
+    color: var(--heading-white);
+}
+
+.decrypt-modal-label {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--heading-white);
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.decrypt-modal-input {
+    width: 100%;
+    padding: 1.25rem;
+    background: var(--smooth-black);
+    border: 2px solid var(--border-gray-purple);
+    border-radius: 10px;
+    color: #888;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    transition: border-color 0.3s ease;
+}
+
+.decrypt-modal-input:focus {
+    outline: none;
+    border-color: var(--primary-violet);
+    color: var(--heading-white);
+}
+
+.decrypt-modal-input::placeholder {
+    color: #666;
+}
+
+.decrypt-modal-btn {
+    width: 100%;
+    padding: 1.25rem;
+    background: var(--primary-violet);
+    color: var(--smooth-black);
+    border: none;
+    border-radius: 10px;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 1.125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.decrypt-modal-btn:hover {
+    background: #9f8bfa;
+    transform: translateY(-2px);
+}
+
+.decrypt-modal-back {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.decrypt-modal-back a {
+    font-family: 'Open Sans', sans-serif;
+    color: var(--primary-violet);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: opacity 0.3s ease;
+}
+
+.decrypt-modal-back a:hover {
+    opacity: 0.7;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const connectionControls = document.getElementById('connectionControls');
+    const userId = {{ profile_user.id | tojson }};
+    
+    // Function to update connection controls
+    function updateConnectionControls() {
+        fetch(`/connections/check-status/${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                
+                if (data.status === 'none') {
+                    html = `
+                        <form method="POST" action="{{ url_for('connections.request_connection', user_id=profile_user.id) }}" style="display: inline;">
+                            <button type="submit" class="connect-btn">Connect</button>
+                        </form>
+                    `;
+                } else if (data.status === 'pending') {
+                    if (data.is_requester) {
+                        html = '<button class="connect-btn" disabled>Pending</button>';
+                    } else {
+                        html = '<a href="{{ url_for('connections.notifications_page') }}" class="connect-btn" style="text-decoration: none;">Respond</a>';
+                    }
+                } else if (data.status === 'accepted') {
+                    html = '<button class="connect-btn connected">Connected</button>';
+                }
+                
+                connectionControls.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                connectionControls.innerHTML = '<button class="connect-btn" disabled>Error</button>';
+            });
+    }
+    
+    // Initial update
+    updateConnectionControls();
+});
+
+// Function to open decrypt modal
+function openDecryptModal(fileId, fileName, algorithm) {
+    console.log('Opening decrypt modal for file:', fileId, fileName, algorithm);
+    document.getElementById('decryptFileName').textContent = fileName;
+    const modal = document.getElementById('decryptModal');
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+    
+    // Set form action
+    const form = document.getElementById('decryptForm');
+    form.action = `/files/decrypt/${fileId}`;
+    console.log('Form action set to:', form.action);
+    
+    // Clear password field and focus
+    document.getElementById('decryptPassword').value = '';
+    document.getElementById('decryptPassword').focus();
+}
+
+// Function to close decrypt modal
+function closeDecryptModal(event) {
+    if (event) {
+        event.preventDefault();
+    }
+    const modal = document.getElementById('decryptModal');
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+    document.getElementById('decryptForm').reset();
+}
+
+// Function to request access to a specific file
+function requestFileAccess(fileId, button) {
+    // Disable button and show loading state
+    button.disabled = true;
+    const originalText = button.textContent;
+    button.textContent = 'Requesting...';
+    
+    fetch(`/access/request/${fileId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Change button to "Requested" state permanently
+            button.textContent = 'Requested';
+            button.disabled = true;
+            button.classList.remove('request');
+            button.classList.add('requested');
+            button.style.opacity = '0.6';
+            button.style.backgroundColor = 'transparent';
+            button.style.border = '2px solid var(--border-gray-purple)';
+            button.style.cursor = 'not-allowed';
+            button.onclick = null; // Remove click handler
+            
+            // Show success notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--accept-teal);
+                color: var(--smooth-black);
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                font-family: 'Exo 2', sans-serif;
+                font-weight: 600;
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = data.message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        } else {
+            button.textContent = originalText;
+            button.disabled = false;
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        button.textContent = originalText;
+        button.disabled = false;
+        alert('An error occurred while requesting access');
+    });
+}
+
+// Add animation keyframes
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Auto-hide flash messages after 5 seconds (same as dashboard)
+setTimeout(function() {
+    const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(function(msg) {
+        msg.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+        msg.style.opacity = '0';
+        msg.style.transform = 'translateX(400px)';
+        setTimeout(function() {
+            msg.remove();
+        }, 500);
+    });
+}, 5000);
+</script>
+{% endblock %}
